@@ -1,0 +1,29 @@
+import numpy as np
+ 
+def simulate_f_asym(N_sne=10000, N_rays=1000,
+                     arm_scale_length=100.0, R_cool=40.0):
+    np.random.seed(42)
+    d_sn = np.random.exponential(scale=arm_scale_length, size=N_sne)
+ 
+    phi      = np.random.uniform(0, 2*np.pi, N_rays)
+    costheta = np.random.uniform(-1, 1, N_rays)
+    theta    = np.arccos(costheta)
+    x_dir    = np.sin(theta) * np.cos(phi)  # +x = toward void
+ 
+    f_asym_list = []
+    for d in d_sn:
+        escaped_x = 0.0
+        for i in range(N_rays):
+            if x_dir[i] > 0:                    # ray points toward void
+                dist_to_void = d / x_dir[i]
+                if dist_to_void < R_cool:        # ejecta escapes!
+                    escaped_x += x_dir[i]
+        f_asym_list.append(escaped_x / N_rays)
+ 
+    f_arr = np.array(f_asym_list)
+    print(f'Global f_asym = {np.mean(f_arr)*100:.3f}% +/- {np.std(f_arr)*100:.3f}%')
+    # Output: f_asym = 5.592% +/- 8.935%
+    return np.mean(f_arr) * 100
+ 
+simulate_f_asym(N_sne=10000, N_rays=1000,
+                arm_scale_length=100.0, R_cool=40.0)
