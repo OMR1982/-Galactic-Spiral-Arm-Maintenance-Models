@@ -1,0 +1,72 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def run_champagne_sim(N_sne, R_cool, scale_length, N_rays=1000, seed=42):
+    np.random.seed(seed)
+    d_sn = np.random.exponential(scale=scale_length, size=N_sne)
+
+    phi      = np.random.uniform(0, 2*np.pi, N_rays)
+    costheta = np.random.uniform(-1, 1, N_rays)
+    theta    = np.arccos(costheta)
+    x_dir    = np.sin(theta) * np.cos(phi)
+
+    f_asym_list = []
+    for d in d_sn:
+        escaped_x = 0.0
+        for i in range(N_rays):
+            if x_dir[i] > 0:
+                if (d / x_dir[i]) < R_cool:
+                    escaped_x += x_dir[i]
+        f_asym_list.append(escaped_x / N_rays)
+
+    return np.mean(f_asym_list) * 100
+
+
+# 1. Generate observational data points
+R_orion = np.linspace(0.1, 1.0, 15)
+f_orion = [run_champagne_sim(10000, r, 2.0) for r in R_orion]
+
+R_m82 = np.linspace(3.0, 15.0, 15)
+f_m82 = [run_champagne_sim(10000, r, 400.0) for r in R_m82]
+
+
+# 2. Build the Publication-Standard Dual Axis Plot
+fig, ax1 = plt.subplots(figsize=(10, 6), dpi=120)
+
+# --- Bottom Axis: Orion Nebula (Orange) ---
+color1 = '#d95f02' # Deep Orange
+ax1.set_xlabel('Orion Nebula (M42) - Cooling Radius [pc]  (Scale = 2 pc)', color=color1, fontweight='bold', fontsize=11)
+line1, = ax1.plot(R_orion, f_orion, marker='o', color=color1, linewidth=2.5, label='Orion M42 (Local HII Region)')
+ax1.tick_params(axis='x', labelcolor=color1)
+ax1.set_ylabel('Asymmetry Escape Fraction  f_asym (%)', fontsize=12, fontweight='bold', color='#333333')
+ax1.set_ylim(0, 7.0) 
+
+# --- Top Axis: M82 Starburst (Red) ---
+ax2 = ax1.twiny()
+color2 = '#7570b3' # Deep Purple/Blue 
+ax2.set_xlabel('Starburst Galaxy (M82) - Cooling Radius [pc]  (Scale = 400 pc)', color=color2, fontweight='bold', fontsize=11)
+line2, = ax2.plot(R_m82, f_m82, marker='s', linestyle='--', color=color2, linewidth=2.5, label='M82 Core (Starburst Engine)')
+ax2.tick_params(axis='x', labelcolor=color2)
+
+# --- Visual Explanations (Annotation) ---
+ax1.annotate('High Efficiency: Easy escape\nin small cloud (Scale = 2pc)', 
+             xy=(0.5, 3.8), xytext=(0.2, 5.0),
+             arrowprops=dict(facecolor='#d95f02', shrink=0.05, width=1.5, headwidth=6),
+             fontsize=10, fontweight='bold', color='#d95f02')
+
+ax1.annotate('Severe Confinement (<0.6%):\nIndividual SNe drown in 400pc core', 
+             xy=(0.7, 0.45), xytext=(0.4, 1.5),
+             arrowprops=dict(facecolor='#7570b3', shrink=0.05, width=1.5, headwidth=6),
+             fontsize=10, fontweight='bold', color='#7570b3')
+
+# --- Global Layout & Styling ---
+plt.title('Kinematic Feedback Efficiency: Normal Star-Forming vs. Starburst Environments', 
+          fontsize=12, fontweight='bold', pad=25)
+ax1.grid(True, linestyle=':', alpha=0.6)
+
+lines = [line1, line2]
+labels = [l.get_label() for l in lines]
+ax1.legend(lines, labels, loc='upper left', framealpha=0.95, edgecolor='none', fontsize=11)
+
+plt.tight_layout()
+plt.show()
