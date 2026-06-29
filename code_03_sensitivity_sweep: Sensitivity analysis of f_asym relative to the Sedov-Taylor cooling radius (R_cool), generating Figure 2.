@@ -1,0 +1,47 @@
+import numpy as np
+import matplotlib.pyplot as plt
+ 
+def simulate_f_asym(N_sne=10000, N_rays=1000,
+                     arm_scale_length=100.0, R_cool=40.0):
+    np.random.seed(42)
+    d_sn = np.random.exponential(scale=arm_scale_length, size=N_sne)
+    phi      = np.random.uniform(0, 2*np.pi, N_rays)
+    costheta = np.random.uniform(-1, 1, N_rays)
+    theta    = np.arccos(costheta)
+    x_dir    = np.sin(theta) * np.cos(phi)
+    f_asym_list = []
+    for d in d_sn:
+        escaped_x = 0.0
+        for i in range(N_rays):
+            if x_dir[i] > 0:
+                dist_to_void = d / x_dir[i]
+                if dist_to_void < R_cool:
+                    escaped_x += x_dir[i]
+        f_asym_list.append(escaped_x / N_rays)
+    return np.mean(f_asym_list) * 100
+ 
+# === Sensitivity sweep: f_asym vs R_cool (Figure 2) ===
+R_test_values = np.linspace(10, 100, 10)
+f_results = []
+print('Running simulation across 10 values of R_cool...')
+ 
+for r in R_test_values:
+    val = simulate_f_asym(N_sne=10000, N_rays=1000,
+                          arm_scale_length=100.0, R_cool=r)
+    f_results.append(val)
+    print(f'R_cool = {r:5.1f} pc  --->  f_asym = {val:.3f}%')
+ 
+# Plot Figure 2
+plt.figure(figsize=(9, 5))
+plt.plot(R_test_values, f_results, marker='o',
+         color='#1f77b4', linewidth=2.5)
+plt.title('Global Asymmetry (f_asym) vs Cooling Radius',
+          fontsize=12, fontweight='bold')
+plt.xlabel('Cooling Radius R_cool (pc)', fontsize=11)
+plt.ylabel('f_asym (%)', fontsize=11)
+plt.axvline(x=40.0, color='red', linestyle='--', alpha=0.7,
+            label='Original R_cool (40 pc)')
+plt.grid(True, linestyle=':', alpha=0.8)
+plt.legend()
+plt.show()
+# Result at R_cool=40 pc: f_asym = 5.59%
