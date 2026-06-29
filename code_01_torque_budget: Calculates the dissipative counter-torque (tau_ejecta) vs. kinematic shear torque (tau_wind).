@@ -1,0 +1,71 @@
+import numpy as np
+import matplotlib.pyplot as plt
+ 
+# === Physical Constants (SI) ===
+# Corrected: uses LOCAL SN rate per arm + Kim & Ostriker (2015) momentum
+ 
+# Local SN rate per arm
+R_SN_total  = 0.02          # yr-1 (whole galaxy, Adams+2013)
+f_arm       = 0.75          # fraction of SNe in arms (Kennicutt+2012)
+N_arms      = 4             # number of major arms
+R_SN_arm    = R_SN_total * f_arm / N_arms  # = 3.75e-3 yr-1
+ 
+# Differential rotation
+dOmega   = 16e3 / (3.086e19)  # rad/s = 16 km/s/kpc (Gaia DR3)
+ 
+# Sedov-Taylor terminal momentum (Kim & Ostriker 2015, ApJ 802, 99)
+# p = 2.8e5 * (n/1 cm^-3)^(-2/17) M_sun km/s
+n_arm       = 100           # arm density (cm-3, Heyer & Brunt 2004)
+p_terminal  = 2.8e5 * (n_arm)**(-2./17) * 1.989e30 * 1e3  # kg m/s
+# p_terminal ~ 3.24e38 kg m/s = 1.63e5 M_sun km/s
+ 
+f_asym      = 0.05          # momentum asymmetry fraction (range 1-10%)
+yr_to_s     = 3.154e7       # s/yr
+ 
+ 
+# Champagne Flow force (corrected: local SN rate + Kim & Ostriker 2015 momentum)
+F_ejecta = (R_SN_arm / yr_to_s) * p_terminal * f_asym
+F_wind   = 3.32e28
+eta      = F_ejecta / F_wind * 100
+print(f'F_ejecta = {F_ejecta:.3e} N')   # --> 1.93e27 N
+print(f'Efficiency = {eta:.2f}%')  # --> ~~5.8%
+ 
+# === Chandrasekhar Gravitational Drag (Null Result) ===
+G        = 6.674e-11
+M_BH     = 10 * 1.989e30
+rho_arm  = 1e-21            # arm gas density (kg/m3)
+ln_Lam   = 10
+v_rel    = 2.2e5
+N_trans  = 2.6e5            # BHs in transit through arm at any time
+ 
+F_df_one = 4 * np.pi * G**2 * M_BH**2 * rho_arm * ln_Lam / v_rel**2
+F_df_tot = F_df_one * N_trans
+eta_df   = F_df_tot / F_wind * 100
+print(f'F_df_total = {F_df_tot:.3e} N')
+print(f'Grav. efficiency = {eta_df:.2e}%')  # --> ~0%
+ 
+# === Time Integration: Angular Momentum Budget ===
+M_arm    = 2.0e39         # kg (arm mass)
+r        = 6.17e19        # m  (2 kpc)
+I_arm    = M_arm * r**2   # kg m2 (moment of inertia)
+ 
+# Torques (rigorously defined)
+tau_wind = M_arm * r**2 * dOmega**2  # = 2.04e48 N m
+tau_ej   = F_ejecta * r              # = 1.19e47 N m
+alpha_u  = tau_wind / I_arm          # unbraked angular acceleration
+alpha_b  = (tau_wind - tau_ej) / I_arm  # braked angular acceleration
+ 
+time_s   = np.linspace(0, 1e9 * 3.154e7, 1000)
+theta_u  = np.degrees(0.5 * alpha_u * time_s**2)
+theta_b  = np.degrees(0.5 * alpha_b * time_s**2)
+delay    = (theta_u[-1] - theta_b[-1]) / theta_u[-1] * 100
+print(f'Structural delay margin: {delay:.2f}%')  # --> ~5.8%
+ 
+# === Plot ===
+time_myr = time_s / 3.154e7 / 1e6
+plt.plot(time_myr, theta_u, 'r--', label='Classical Winding')
+plt.plot(time_myr, theta_b, 'steelblue', lw=2, label='Champagne Flow Model (~5.8%)')
+plt.fill_between(time_myr, theta_u, theta_b, alpha=0.15, label='Delay Margin')
+plt.xlabel('Time (Myr)'); plt.ylabel('Winding Angle (deg)')
+plt.title('Asymmetric SN Feedback: Structural Delay in Spiral Arms')
+plt.legend(); plt.grid(ls=':', alpha=0.6); plt.tight_layout(); plt.show()
