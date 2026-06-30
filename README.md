@@ -1,1 +1,6 @@
-- [code_01_torque_budget](https://github.com/OMR1982/-Galactic-Spiral-Arm-Maintenance-Models/blob/main/code_01_torque_budget%3A%20Calculates%20the%20dissipative%20counter-torque%20(tau_ejecta)%20vs.%20kinematic%20shear%20torque%20(tau_wind).)
+# Galactic Spiral Arm Maintenance Models
+
+- [code_01_torque_budget](https://github.com/OMR1982/Galactic-Spiral-Arm-Maintenance-Models/tree/main/code_01_torque_budget)
+- [code_02_monte_carlo](https://github.com/OMR1982/Galactic-Spiral-Arm-Maintenance-Models/tree/main/code_02_monte_carlo)
+- [code_03_sensitivity_sweep](https://github.com/OMR1982/Galactic-Spiral-Arm-Maintenance-Models/tree/main/code_03_sensitivity_sweep)
+- [code_04_m82_m42_application](https://github.com/OMR1982/Galactic-Spiral-Arm-Maintenance-Models/tree/main/code_04_m82_m42_application)
